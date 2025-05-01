@@ -1,6 +1,6 @@
-appId: com.example.nextron
-productName: My Nextron App
-copyright: Copyright © 2018 Yoshihide Shiono
+appId: com.sico.leagueselector
+productName: JDPATCH LeagueSelector
+copyright: Copyright © 2025 Sic0
 directories:
   output: dist
   buildResources: resources
@@ -10,3 +10,8 @@ files:
       - package.json
       - app
 publish: null
+
+win:
+  target:
+    - portable
+  icon: "icon.ico"
