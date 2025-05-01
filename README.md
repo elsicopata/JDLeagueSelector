@@ -19,13 +19,18 @@ Esta aplicación es un selector de ligas diseñado específicamente para el parc
   <img src="renderer/public/images/Screenshot_2.png" alt="Pantalla principal" width="600">
 </p>
 
-## Instalación
+## Uso
 
 ### Requisitos Previos
 
-- Tener instalado el parche **JD PATCH** para PES 2013.
+- Tener instalado el parche **JD PATCH 6.1** para PES 2013.
 - Node.js y npm (o yarn) instalados en tu sistema.
 
+### Pasos
+
+1. Seleccionar el la carpeta de instalacion del **JD PATCH**(no del pes 2013).
+2. Seleccionar liga en la que desea jugar.
+3. Disfrutar.
 
 ## Licencia
 
