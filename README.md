@@ -24,7 +24,6 @@ Esta aplicación es un selector de ligas diseñado específicamente para el parc
 ### Requisitos Previos
 
 - Tener instalado el parche **JD PATCH 6.1** para PES 2013.
-- Node.js y npm (o yarn) instalados en tu sistema.
 
 ### Pasos
 
