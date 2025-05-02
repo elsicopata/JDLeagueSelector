@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 const leagues = [
     {
         name: 'Liga BetPlay Dimayor (Colombia)',
@@ -36,8 +38,6 @@ type Props = {
     onSelect: (leagueName: string) => void
 }
 
-import Image from 'next/image';
-
 export default function LeagueSelector({ selected, onSelect }: Props) {
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -48,8 +48,9 @@ export default function LeagueSelector({ selected, onSelect }: Props) {
                     <div
                         key={index}
                         onClick={() => onSelect(league.name)}
-                        className={`w-40 h-40 bg-gray-800 p-4 rounded-lg transform transition duration-300 hover:scale-105 hover:shadow-neon cursor-pointer flex items-center justify-center relative ${isSelected ? 'ring-4 ring-sky-500' : ''
-                            }`}
+                        className={`w-40 h-40 bg-gray-800 p-4 rounded-lg transform transition duration-300 hover:scale-105 hover:shadow-neon cursor-pointer flex items-center justify-center relative
+                        ${isSelected ? 'ring-4 ring-sky-300 bg-sky-800' : ''}
+                        `}
                     >
                         <Image
                             src={league.logo}

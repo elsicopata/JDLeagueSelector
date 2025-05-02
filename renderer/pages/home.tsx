@@ -1,80 +1,65 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Head from 'next/head'
-import LeagueSelector from '../components/LeagueSelector'
+import { useRouter } from 'next/router'
+
+const opciones = [
+  {
+    name: 'Cambiar Liga',
+    description: 'Selecciona la liga que quieres activar en el parche.',
+    image: '/images/seleccionLiga.webp',
+    href: '/cambiarLiga',
+    alt: 'Cambiar Liga'
+  },
+  {
+    name: 'Cambiar Fondos',
+    description: 'Selecciona los fondos que quieres usar.',
+    image: '/images/seleccionFondo.webp',
+    href: '/cambiarFondos',
+    alt: 'Cambiar Fondos'
+  }
+]
 
 export default function HomePage() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [fileFound, setFileFound] = useState(false)
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null)
-
-  useEffect(() => {
-    setLoading(false)
-    setError('')
-    setFileFound(false)
-    setSelectedLeague(null)
-  }, [])
-
-  const handleSelectFolder = async () => {
-    setLoading(true)
-    setError('')
-    setFileFound(false)
-
-    const result = await window.electronAPI?.selectPesFolder()
-
-    if (result?.error) {
-      setError(result.error)
-    } else if (result?.fileExists) {
-      setFileFound(true)
-      setSelectedLeague(result.selected ?? null)
-    } else {
-      setError('El archivo leagues-map.txt no fue encontrado.')
-    }
-
-    setLoading(false)
-  }
-
-  const handleSelectLeague = async (leagueName: string) => {
-    const result = await window.electronAPI?.setSelectedLeague(leagueName)
-    if (!result?.error) {
-      setSelectedLeague(leagueName)
-    } else {
-      setError(result.error)
-    }
-  }
+  const router = useRouter()
 
   return (
     <>
       <Head>
-        <title>PES 2013 League Selector By Sic0</title>
+        <title>PES 2013 Selector - By Sic0</title>
       </Head>
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-start py-12 px-4">
-        {!fileFound && (
-          <button
-            onClick={handleSelectFolder}
-            className="bg-blue-600 px-6 py-3 rounded-lg hover:bg-blue-500 transition mb-6"
+      <div className="fixed top-16 left-0 right-0 bottom-0 bg-pes-bg text-pes-text flex flex-col items-center justify-center px-4 overflow-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          {opciones.map((opcion) => (
+            <div
+              key={opcion.name}
+              onClick={() => router.push(opcion.href)}
+              className="w-72 h-80 bg-pes-card rounded-lg shadow-lg cursor-pointer flex flex-col transition border-2 border-transparent hover:border-pes-border hover:shadow-lg"
+            >
+              {/* Imagen ocupa la mitad superior, se deforma para rellenar */}
+              <div className="w-full h-2/4 rounded-t-lg overflow-hidden">
+                <img
+                  src={opcion.image}
+                  alt={opcion.alt}
+                  className="w-full h-full object-fill"
+                />
+              </div>
+              <div className="flex-1 flex flex-col justify-center items-center p-4">
+                <h3 className="text-2xl font-bold mb-2 text-center">{opcion.name}</h3>
+                <p className="text-center text-pes-textSecondary">{opcion.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <h2 className="text-base font-semibold absolute bottom-0 right-0 p-4 flex items-center gap-2 drop-shadow-lg select-none">
+          <span className="text-pes-textSecondary">Hecho por</span>
+          <span
+            className="font-bold bg-gradient-to-r from-sky-400 via-white to-sky-400 bg-clip-text text-transparent px-1"
+            style={{ letterSpacing: '1px' }}
           >
-            Seleccionar carpeta contenedora de JD PATCH
-          </button>
-        )}
-
-        {loading && <p className="text-lg">Verificando carpeta...</p>}
-
-        {error && (
-          <p className="text-red-400 mb-4 font-semibold">{error}</p>
-        )}
-
-        {fileFound && (
-          <>
-            <h2 className="text-4xl font-bold mb-8">Selecciona una Liga</h2>
-            <LeagueSelector
-              selected={selectedLeague}
-              onSelect={handleSelectLeague}
-            />
-          </>
-        )}
-        <h2 className="text-sm text-red-600 mt-8 font-semibold absolute bottom-0 right-0 p-4">
-          Hecho por Sic0 para la comunidad de JD PATCH
+            Sic0
+          </span>
+          <span className="text-pes-textSecondary">para la comunidad de JD PATCH</span>
+          <span className="ml-1 animate-pulse text-red-500 text-lg">❤️</span>
         </h2>
       </div>
     </>

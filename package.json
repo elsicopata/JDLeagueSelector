@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "jd-patch-league-selector",
+  "name": "jd-patch-selector",
   "description": "Esta aplicación es un selector de ligas diseñado específicamente para el parche JD PATCH de PES 2013. Permite seleccionar fácilmente la liga que deseas activar en el juego, actualizando automáticamente los archivos necesarios",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "Sic0",
   "main": "app/background.js",
   "scripts": {

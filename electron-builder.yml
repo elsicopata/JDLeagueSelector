@@ -1,5 +1,5 @@
-appId: com.sico.leagueselector
-productName: JDPATCH LeagueSelector
+appId: com.sico.selector
+productName: JDPATCH Selector
 copyright: Copyright © 2025 Sic0
 directories:
   output: dist

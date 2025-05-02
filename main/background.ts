@@ -83,7 +83,8 @@ ipcMain.handle('select-pes-folder', async () => {
   const content = fs.readFileSync(leaguesMapPath, 'utf8')
   const selected = getSelectedLeagueFromFile(content)
 
-  return { fileExists: true, selected }
+  return { fileExists: true, selected, selectedPath } // <--- agrega selectedPath aquí
+
 })
 
 ipcMain.handle('set-selected-league', async (_event, leagueName: string) => {
@@ -176,3 +177,93 @@ function getSelectedLeagueFromFile(content: string): string | null {
 
   return null
 }
+
+// Copiar archivo a una ruta específica
+ipcMain.handle('copy-file', async (_event, { source, destination }) => {
+  try {
+    fs.copyFileSync(source, destination)
+    return { success: true }
+  } catch (err) {
+    return { error: `Error al copiar el archivo: ${err.message}` }
+  }
+})
+
+// Eliminar archivo
+ipcMain.handle('delete-file', async (_event, filePath: string) => {
+  try {
+    fs.unlinkSync(filePath)
+    return { success: true }
+  } catch (err) {
+    return { error: `Error al eliminar el archivo: ${err.message}` }
+  }
+})
+
+// Buscar preview.jpg/png en carpeta y subcarpetas
+ipcMain.handle('find-preview-image', async (_event, basePath: string) => {
+  try {
+    const exts = ['jpg', 'jpeg', 'png']
+    let found: string | null = null
+
+    const search = (dir: string): void => {
+      if (found) return
+      if (!fs.existsSync(dir)) return
+      const files = fs.readdirSync(dir)
+      for (const file of files) {
+        const full = path.join(dir, file)
+        if (fs.statSync(full).isDirectory()) {
+          search(full)
+        } else if (exts.some(ext => file.toLowerCase() === `preview.${ext}`)) {
+          found = full
+          return
+        }
+      }
+    }
+
+    search(basePath)
+    if (found) {
+      // Devuelve el tipo mime y el base64
+      const ext = path.extname(found).toLowerCase()
+      const mime = ext === '.png' ? 'image/png' : 'image/jpeg'
+      const buffer = fs.readFileSync(found)
+      const base64 = buffer.toString('base64')
+      return { base64, mime }
+    }
+    return null
+  } catch {
+    return null
+  }
+})
+
+// Reemplazar archivos de entrada
+ipcMain.handle('replace-entrada-files', async (_event, sourceDir: string, targetDir: string, files: string[]) => {
+  try {
+    if (!fs.existsSync(sourceDir)) {
+      return { error: 'La carpeta seleccionada no existe.' }
+    }
+    // Buscar archivos en sourceDir y subcarpetas
+    const findFile = function (fileName: string, dir: string): string | null {
+      const items = fs.readdirSync(dir)
+      for (const item of items) {
+        const full = path.join(dir, item)
+        if (fs.statSync(full).isDirectory()) {
+          const found = findFile(fileName, full)
+          if (found) return found
+        } else if (item === fileName) {
+          return full
+        }
+      }
+      return null
+    }
+
+    for (const file of files) {
+      const found = findFile(file, sourceDir)
+      if (found) {
+        const dest = path.join(targetDir, file)
+        fs.copyFileSync(found, dest)
+      }
+    }
+    return { success: true }
+  } catch (err) {
+    return { error: `Error al reemplazar archivos: ${err.message}` }
+  }
+})
