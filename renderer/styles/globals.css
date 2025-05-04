@@ -4,6 +4,44 @@
 
 @layer base {
   body {
-    @apply bg-pes-bg text-pes-text;
+    @apply bg-transparent text-pes-text;
   }
+}
+
+html,
+body,
+#__next {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  /* bg-gray-800 de Tailwind, igual que tu TitleBar */
+}
+
+.grow-bar {
+  transition: transform 0.18s cubic-bezier(.4, 2, .6, 1), box-shadow 0.18s;
+  box-shadow: 0 0 6px 1px #fff5;
+}
+
+.titlebar-btn:hover .grow-bar,
+.titlebar-btn:focus .grow-bar {
+  transform: scale(1.18);
+  box-shadow: 0 0 12px 2px #fff, 0 0 20px 4px #fff5;
+}
+
+.app-border-glow {
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 0px #fff, 0 0 10px 4px #fff inset;
+  /* Puedes ajustar los valores para más o menos "grow" */
+}
+
+.grow-bar-inset {
+  transition: transform 0.18s cubic-bezier(.4, 2, .6, 1), box-shadow 0.18s;
+  box-shadow: 0 0 8px 0 #fff inset, 0 0 2px 0 #fff;
+}
+
+.titlebar-btn:hover .grow-bar-inset,
+.titlebar-btn:focus .grow-bar-inset {
+  transform: scale(1.18);
+  box-shadow: 0 0 16px 2px #fff inset, 0 0 4px 0 #fff;
 }

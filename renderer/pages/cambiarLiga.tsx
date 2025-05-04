@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import LeagueSelector from '../components/LeagueSelector'
 import SelectFolderButton from '../components/SelectFolderButton'
 
@@ -10,7 +10,8 @@ const CambiarLigaPage = () => {
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
 
-    const handleSelectFolder = async () => {
+    // Memoized handlers to avoid unnecessary re-renders
+    const handleSelectFolder = useCallback(async () => {
         setLoading(true)
         setError('')
         setSuccess(false)
@@ -30,9 +31,9 @@ const CambiarLigaPage = () => {
             setFileExists(false)
             setError('No se encontró el archivo leagues-map.txt en la carpeta seleccionada.')
         }
-    }
+    }, [])
 
-    const handleSelectLeague = async (leagueName: string) => {
+    const handleSelectLeague = useCallback(async (leagueName: string) => {
         setError('')
         setSuccess(false)
         const result = await window.electronAPI?.setSelectedLeague(leagueName)
@@ -42,17 +43,26 @@ const CambiarLigaPage = () => {
         } else {
             setError(result?.error || 'Error al seleccionar la liga.')
         }
-    }
+    }, [])
+
+    // Preload league images for faster selector experience (if LeagueSelector uses images)
+    useMemo(() => {
+        if (!fileExists) return
+        // Si LeagueSelector usa imágenes locales, precárgalas aquí
+        if (window && (window as any).LEAGUE_IMAGES) {
+            (window as any).LEAGUE_IMAGES.forEach((src: string) => {
+                const img = new window.Image()
+                img.src = src
+            })
+        }
+    }, [fileExists])
 
     return (
-        <div className="fixed top-16 left-0 right-0 bottom-0 bg-pes-bg text-pes-text flex flex-col items-center justify-start p-4 overflow-hidden">
-            {/* Título siempre centrado arriba */}
-            <div className="absolute top-0 left-0 right-0 flex justify-center items-center h-20 pointer-events-none z-10">
+        <div className="relative flex-1 w-full flex flex-col items-center justify-start bg-pes-bg pt-10" style={{ overflow: 'hidden' }}>
+            {/* Título */}
+            <div className="w-full flex justify-center items-center h-20 mb-4">
                 <h2 className="text-4xl font-bold">Seleccionar Liga</h2>
             </div>
-
-            {/* Espacio para el título */}
-            <div className="h-20" />
 
             {/* Botón para seleccionar carpeta */}
             {(!fileChecked && !loading) && (
@@ -79,11 +89,11 @@ const CambiarLigaPage = () => {
 
             {/* Selector de ligas si existe el archivo */}
             {fileChecked && fileExists && !loading && (
-                <>
+                <React.Suspense fallback={<div className="text-pes-textSecondary">Cargando ligas...</div>}>
                     <LeagueSelector selected={selectedLeague} onSelect={handleSelectLeague} />
                     {success && <p className="text-pes-success mt-4">Liga seleccionada correctamente.</p>}
                     {error && <p className="text-pes-error mt-4">{error}</p>}
-                </>
+                </React.Suspense>
             )}
         </div>
     )

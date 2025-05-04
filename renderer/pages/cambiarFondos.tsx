@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import SelectFolderButton from '../components/SelectFolderButton'
+import Image from 'next/image'
 
 const ENTRADA_OPTIONS = [
     '2022 FIFA World Cup Qualifier', 'Brasileirao', 'Bundesliga', 'Catar 2022', 'COPA AMERICA 2024', 'Copa Argentina',
@@ -9,13 +10,22 @@ const ENTRADA_OPTIONS = [
     'Super Lig', 'UEFA Champions League', 'UEFA CONFERENCIA LEAGUE', 'UEFA Europa League'
 ]
 
+const COPAS_OPTIONS = [
+    'Copa Africana 2023', 'Copa America 2024', 'Copa Asiatica 2023', 'Copa Mundial 2026',
+    'Copa Sudamericana 2024', 'Default', 'EuroCopa 2024', 'Mundial de clubes',
+    'Mundial de clubes 2025', 'UEFA CONFECENCIA LEAGUE'
+]
+
 const ENTRADA_FILES = [
     'CINEMATIC ENTRANCE  EXIBITION_217.bin',
     'CINEMATIC ENTRANCE WORLD CUP_216.bin',
     'Efecto de Cinematica_184.bin'
 ]
 
+const COPAS_FILE = ['imagen para las copas_787.bin']
+
 const ENTRADA_IMG_PATH = '/Server/User/Entrance/IMG/dt09.img/'
+const COPAS_IMG_PATH = '/Server/User/Fondo de copas/IMG/dt06.img/'
 
 const TABS = [
     { key: 'entrada', label: 'Entrada' },
@@ -23,17 +33,47 @@ const TABS = [
     { key: 'wallpapers', label: 'Wallpapers' }
 ]
 
+const TITLEBAR_HEIGHT = 40 // h-10 = 40px
+
+const preloadImage = (src: string) => {
+    if (!src) return
+    const img = new window.Image()
+    img.src = src
+}
+
 const CambiarFondosPage = () => {
     const [folderPath, setFolderPath] = useState<string | null>(null)
     const [fileChecked, setFileChecked] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [tab, setTab] = useState<'entrada' | 'copas' | 'wallpapers'>('entrada')
-
-    // Entrada
+    const [imgError, setImgError] = useState(false)
+    const [imgLoading, setImgLoading] = useState(true)
+    const [copasIndex, setCopasIndex] = useState(0)
+    const [copasImgError, setCopasImgError] = useState(false)
+    const [copasImgLoading, setCopasImgLoading] = useState(true)
     const [entradaIndex, setEntradaIndex] = useState(0)
-    const [previewData, setPreviewData] = useState<{ base64: string, mime: string } | null>(null)
-    const [previewLoading, setPreviewLoading] = useState(false)
+
+    // Memoized options
+    const option = useMemo(() => ENTRADA_OPTIONS[entradaIndex], [entradaIndex])
+    const copasOption = useMemo(() => COPAS_OPTIONS[copasIndex], [copasIndex])
+    const previewImgPath = useMemo(() => `/images/entrada/${option}/preview.webp`, [option])
+    const copasPreviewImgPath = useMemo(() => `/images/copas/${copasOption}/preview.webp`, [copasOption])
+
+    // Preload next/prev images for smoother carousel
+    useEffect(() => {
+        if (tab === 'entrada') {
+            preloadImage(`/images/entrada/${ENTRADA_OPTIONS[(entradaIndex + 1) % ENTRADA_OPTIONS.length]}/preview.webp`)
+            preloadImage(`/images/entrada/${ENTRADA_OPTIONS[(entradaIndex - 1 + ENTRADA_OPTIONS.length) % ENTRADA_OPTIONS.length]}/preview.webp`)
+        }
+    }, [entradaIndex, tab])
+
+    useEffect(() => {
+        if (tab === 'copas') {
+            preloadImage(`/images/copas/${COPAS_OPTIONS[(copasIndex + 1) % COPAS_OPTIONS.length]}/preview.webp`)
+            preloadImage(`/images/copas/${COPAS_OPTIONS[(copasIndex - 1 + COPAS_OPTIONS.length) % COPAS_OPTIONS.length]}/preview.webp`)
+        }
+    }, [copasIndex, tab])
 
     // Selección
     const handleSelectFolder = async () => {
@@ -53,31 +93,18 @@ const CambiarFondosPage = () => {
         }
     }
 
-    // Cargar preview de la opción seleccionada en Entrada
-    useEffect(() => {
-        if (!folderPath) return
-        setPreviewLoading(true)
-        setPreviewData(null)
-        const option = ENTRADA_OPTIONS[entradaIndex]
-        const basePath = `${folderPath}${ENTRADA_IMG_PATH}${option}`
-        window.electronAPI?.findPreviewImage?.(basePath).then((data) => {
-            setPreviewData(data)
-            setPreviewLoading(false)
-        })
-    }, [folderPath, entradaIndex])
-
-    // Cambiar opción del carrusel
+    // Carrusel handlers
     const handlePrev = () => setEntradaIndex((prev) => (prev === 0 ? ENTRADA_OPTIONS.length - 1 : prev - 1))
     const handleNext = () => setEntradaIndex((prev) => (prev === ENTRADA_OPTIONS.length - 1 ? 0 : prev + 1))
+    const handlePrevCopas = () => setCopasIndex((prev) => (prev === 0 ? COPAS_OPTIONS.length - 1 : prev - 1))
+    const handleNextCopas = () => setCopasIndex((prev) => (prev === COPAS_OPTIONS.length - 1 ? 0 : prev + 1))
 
     // Acción de aplicar/cambiar Entrada
     const handleApplyEntrada = async () => {
         if (!folderPath) return
         setLoading(true)
         setError('')
-        const option = ENTRADA_OPTIONS[entradaIndex]
         const basePath = folderPath + ENTRADA_IMG_PATH + option
-        // Buscar los archivos en la carpeta y subcarpetas
         const result = await window.electronAPI?.replaceEntradaFiles?.(
             basePath,
             folderPath + ENTRADA_IMG_PATH,
@@ -88,13 +115,44 @@ const CambiarFondosPage = () => {
         else alert('¡Entrada aplicada correctamente!')
     }
 
+    const handleApplyCopas = async () => {
+        if (!folderPath) return
+        setLoading(true)
+        setError('')
+        const basePath = folderPath + COPAS_IMG_PATH + copasOption
+        const result = await window.electronAPI?.replaceEntradaFiles?.(
+            basePath,
+            folderPath + COPAS_IMG_PATH,
+            COPAS_FILE
+        )
+        setLoading(false)
+        if (result?.error) setError(result.error)
+        else alert('¡Fondo de copas aplicado correctamente!')
+    }
+
+    // Resetear imgError y imgLoading al cambiar de opción
+    useEffect(() => {
+        setImgError(false)
+        setImgLoading(true)
+    }, [previewImgPath])
+
+    useEffect(() => {
+        setCopasImgError(false)
+        setCopasImgLoading(true)
+    }, [copasPreviewImgPath])
+
     return (
-        <div className="fixed top-16 left-0 right-0 bottom-0 bg-pes-bg text-pes-text flex flex-col items-center justify-start p-4 overflow-hidden">
+        <div
+            className="relative flex-1 min-h-0 w-full flex flex-col items-center justify-start bg-pes-bg"
+            style={{
+                height: `calc(100vh - ${TITLEBAR_HEIGHT}px)`,
+                overflow: 'hidden'
+            }}
+        >
             {/* Título */}
-            <div className="absolute top-0 left-0 right-0 flex justify-center items-center h-20 pointer-events-none z-10">
-                <h2 className="text-4xl font-bold">Cambiar Fondos</h2>
+            <div className="w-full flex justify-center items-center h-20 mb-2">
+                <h2 className="text-3xl font-bold">Cambiar Fondos</h2>
             </div>
-            <div className="h-20" />
 
             {/* Botón seleccionar carpeta */}
             {!fileChecked && !loading && (
@@ -116,9 +174,9 @@ const CambiarFondosPage = () => {
 
             {/* Tabs y contenido */}
             {fileChecked && !loading && (
-                <div className="w-full max-w-2xl flex flex-col items-center">
+                <div className="w-full max-w-2xl flex flex-col items-center flex-1 min-h-0" style={{ overflow: 'hidden' }}>
                     {/* Tabs */}
-                    <div className="flex gap-4 mb-8">
+                    <div className="flex gap-4 mb-6">
                         {TABS.map((t) => (
                             <button
                                 key={t.key}
@@ -135,22 +193,22 @@ const CambiarFondosPage = () => {
 
                     {/* Entrada */}
                     {tab === 'entrada' && (
-                        <div className="w-full flex flex-col items-center">
+                        <div className="w-full flex flex-col items-center flex-1 min-h-0" style={{ overflow: 'hidden' }}>
                             {/* Carrusel */}
-                            <div className="flex items-center justify-center gap-4 mb-6">
+                            <div className="flex items-center justify-center gap-6 mb-4 w-full max-w-[480px]">
                                 <button
                                     onClick={handlePrev}
-                                    className="p-2 rounded-full bg-pes-card hover:bg-pes-primaryHover transition"
+                                    className="p-2 rounded-full bg-pes-card hover:bg-pes-primaryHover transition flex-shrink-0"
                                     aria-label="Anterior"
                                 >
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <span className="text-xl font-bold min-w-[180px] text-center">{ENTRADA_OPTIONS[entradaIndex]}</span>
+                                <span className="text-lg font-bold text-center flex-1 px-4 truncate">{option}</span>
                                 <button
                                     onClick={handleNext}
-                                    className="p-2 rounded-full bg-pes-card hover:bg-pes-primaryHover transition"
+                                    className="p-2 rounded-full bg-pes-card hover:bg-pes-primaryHover transition flex-shrink-0"
                                     aria-label="Siguiente"
                                 >
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -159,22 +217,33 @@ const CambiarFondosPage = () => {
                                 </button>
                             </div>
                             {/* Imagen o nombre */}
-                            <div className="w-64 h-40 bg-pes-card rounded-lg flex items-center justify-center mb-6 border-2 border-pes-border overflow-hidden">
-                                {previewLoading ? (
-                                    <span className="text-pes-textSecondary">Cargando imagen...</span>
-                                ) : previewData ? (
-                                    <img
-                                        src={`data:${previewData.mime};base64,${previewData.base64}`}
-                                        alt={ENTRADA_OPTIONS[entradaIndex]}
-                                        className="w-full h-full object-fill"
-                                    />
+                            <div className="w-full max-w-[480px] h-[230px] bg-pes-card rounded-lg flex items-center justify-center mb-6 border-2 border-pes-border overflow-hidden relative flex-shrink-0">
+                                {!imgError ? (
+                                    <>
+                                        {imgLoading && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 animate-pulse z-10">
+                                                <span className="text-pes-textSecondary">Cargando imagen...</span>
+                                            </div>
+                                        )}
+                                        <Image
+                                            src={previewImgPath}
+                                            alt={option}
+                                            fill
+                                            style={{ objectFit: 'cover' }}
+                                            onError={() => { setImgError(true); setImgLoading(false) }}
+                                            onLoadingComplete={() => setImgLoading(false)}
+                                            sizes="480px"
+                                            priority
+                                            unoptimized
+                                        />
+                                    </>
                                 ) : (
-                                    <span className="text-lg text-pes-textSecondary">{ENTRADA_OPTIONS[entradaIndex]}</span>
+                                    <span className="text-lg text-pes-textSecondary">{option}</span>
                                 )}
                             </div>
                             <button
                                 onClick={handleApplyEntrada}
-                                className="px-8 py-3 bg-pes-primary text-pes-text font-bold rounded-lg shadow-md hover:bg-pes-primaryHover transition"
+                                className="px-6 py-2 bg-pes-primary text-pes-text font-bold rounded-lg shadow-md hover:bg-pes-primaryHover transition"
                             >
                                 Seleccionar esta Entrada
                             </button>
@@ -183,15 +252,66 @@ const CambiarFondosPage = () => {
 
                     {/* Fondo de copas */}
                     {tab === 'copas' && (
-                        <div className="w-full flex flex-col items-center">
-                            {/* Aquí puedes reutilizar tu CupSelector o lógica similar */}
-                            <span className="text-pes-textSecondary">Próximamente: selección de fondo de copas.</span>
+                        <div className="w-full flex flex-col items-center flex-1 min-h-0" style={{ overflow: 'hidden' }}>
+                            {/* Carrusel */}
+                            <div className="flex items-center justify-center gap-6 mb-4 w-full max-w-[480px]">
+                                <button
+                                    onClick={handlePrevCopas}
+                                    className="p-2 rounded-full bg-pes-card hover:bg-pes-primaryHover transition flex-shrink-0"
+                                    aria-label="Anterior"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <span className="text-lg font-bold text-center flex-1 px-4 truncate">{copasOption}</span>
+                                <button
+                                    onClick={handleNextCopas}
+                                    className="p-2 rounded-full bg-pes-card hover:bg-pes-primaryHover transition flex-shrink-0"
+                                    aria-label="Siguiente"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            {/* Imagen o nombre */}
+                            <div className="w-full max-w-[480px] h-[230px] bg-pes-card rounded-lg flex items-center justify-center mb-6 border-2 border-pes-border overflow-hidden relative flex-shrink-0">
+                                {!copasImgError ? (
+                                    <>
+                                        {copasImgLoading && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 animate-pulse z-10">
+                                                <span className="text-pes-textSecondary">Cargando imagen...</span>
+                                            </div>
+                                        )}
+                                        <Image
+                                            src={copasPreviewImgPath}
+                                            alt={copasOption}
+                                            fill
+                                            style={{ objectFit: 'cover' }}
+                                            onError={() => { setCopasImgError(true); setCopasImgLoading(false) }}
+                                            onLoadingComplete={() => setCopasImgLoading(false)}
+                                            sizes="480px"
+                                            priority
+                                            unoptimized
+                                        />
+                                    </>
+                                ) : (
+                                    <span className="text-lg text-pes-textSecondary">{copasOption}</span>
+                                )}
+                            </div>
+                            <button
+                                onClick={handleApplyCopas}
+                                className="px-6 py-2 bg-pes-primary text-pes-text font-bold rounded-lg shadow-md hover:bg-pes-primaryHover transition"
+                            >
+                                Seleccionar este Fondo de Copas
+                            </button>
                         </div>
                     )}
 
                     {/* Wallpapers */}
                     {tab === 'wallpapers' && (
-                        <div className="w-full flex flex-col items-center">
+                        <div className="w-full flex flex-col items-center flex-1 min-h-0" style={{ overflow: 'hidden' }}>
                             <span className="text-pes-textSecondary">Próximamente: selección de wallpapers.</span>
                         </div>
                     )}

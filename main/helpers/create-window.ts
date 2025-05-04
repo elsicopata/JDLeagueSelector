@@ -74,6 +74,9 @@ export const createWindow = (
   const win = new BrowserWindow({
     ...state,
     ...options,
+    frame: false,
+    transparent: true, // <--- permite transparencia real
+    backgroundColor: '#00000000', // <--- fondo completamente transparente
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'), // Asegurate de usar el path correcto
       nodeIntegration: false,

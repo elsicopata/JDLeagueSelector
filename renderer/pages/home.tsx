@@ -27,25 +27,26 @@ export default function HomePage() {
       <Head>
         <title>PES 2013 Selector - By Sic0</title>
       </Head>
-      <div className="fixed top-16 left-0 right-0 bottom-0 bg-pes-bg text-pes-text flex flex-col items-center justify-center px-4 overflow-auto">
+      <div className="flex flex-col items-center justify-center w-full flex-1 bg-pes-bg text-pes-text px-4 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {opciones.map((opcion) => (
             <div
               key={opcion.name}
               onClick={() => router.push(opcion.href)}
-              className="w-72 h-80 bg-pes-card rounded-lg shadow-lg cursor-pointer flex flex-col transition border-2 border-transparent hover:border-pes-border hover:shadow-lg"
+              className="w-72 h-80 bg-pes-card rounded-2xl shadow-xl cursor-pointer flex flex-col transition-all duration-200 group hover:scale-[1.04] hover:shadow-[0_8px_32px_0_rgba(255,255,255,0.7)] hover:bg-gray-900/80"
+              style={{ border: 'none' }}
             >
               {/* Imagen ocupa la mitad superior, se deforma para rellenar */}
-              <div className="w-full h-2/4 rounded-t-lg overflow-hidden">
+              <div className="w-full h-2/4 rounded-t-2xl overflow-hidden">
                 <img
                   src={opcion.image}
                   alt={opcion.alt}
-                  className="w-full h-full object-fill"
+                  className="w-full h-full object-cover transition-all duration-200 group-hover:scale-105 group-hover:brightness-110"
                 />
               </div>
               <div className="flex-1 flex flex-col justify-center items-center p-4">
-                <h3 className="text-2xl font-bold mb-2 text-center">{opcion.name}</h3>
-                <p className="text-center text-pes-textSecondary">{opcion.description}</p>
+                <h3 className="text-2xl font-bold mb-2 text-center group-hover:text-white transition-colors duration-200">{opcion.name}</h3>
+                <p className="text-center text-pes-textSecondary group-hover:text-gray-200 transition-colors duration-200">{opcion.description}</p>
               </div>
             </div>
           ))}

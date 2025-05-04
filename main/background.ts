@@ -1,6 +1,6 @@
 import path from 'path'
 import fs from 'fs'
-import { app, ipcMain, dialog } from 'electron'
+import { app, ipcMain, dialog, BrowserWindow } from 'electron'
 import serve from 'electron-serve'
 import { createWindow } from './helpers'
 
@@ -266,4 +266,14 @@ ipcMain.handle('replace-entrada-files', async (_event, sourceDir: string, target
   } catch (err) {
     return { error: `Error al reemplazar archivos: ${err.message}` }
   }
+})
+
+ipcMain.on('window-minimize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win?.minimize()
+})
+
+ipcMain.on('window-close', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  win?.close()
 })
