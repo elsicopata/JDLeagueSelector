@@ -8,9 +8,14 @@ files:
   - from: .
     filter:
       - package.json
-      - app
+      - app/**
+      - '!**/node_modules/.cache/**'
+      - '!**/tests/**'
+      - '!**/*.md'
+      - '!**/src/**'
+      - '!**/.*'
 publish: null
-
+asar: true
 win:
   target:
     - portable
